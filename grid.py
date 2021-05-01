@@ -15,6 +15,7 @@ class Grid:
         self.gamma = gamma
         self.values = np.zeros(self.rewards.shape)
         self.returns = {(i, j): [] for i, j in product(range(rewards.shape[0]), range(rewards.shape[1]))}
+        self.q = {(i, j, a): 0 for i, j, a in product(range(rewards.shape[0]), range(rewards.shape[1]), ["U", "R", "D", "L"])}
 
     def generate_start_points(self):
         start_points = []
@@ -118,6 +119,42 @@ class Grid:
                 reward = self.rewards[current_state[0]][current_state[1]]
                 self.values[current_state[0]][current_state[1]] += step_size * (reward + self.gamma * self.values[current_state[0]][current_state[1]] - self.values[current_state[0]][current_state[1]])
 
+    def sarsa(self, step_size):
+        current_state = (0, 0)
+        qs = {}
+        for k in self.q:
+            if k[0] == current_state[0] and k[1] == current_state[1]:
+                qs[k] = self.q[k]
+        max_q = max(qs, key=qs.get)
+        action = max_q[2]
+
+        while current_state not in self.terminal_states:
+            new_state = self.new_state_based_on_action(current_state, action)
+
+            if new_state[0] in np.arange(self.rewards.shape[0]) and new_state[1] in np.arange(self.rewards.shape[1]):
+                reward = self.rewards[new_state[0]][new_state[1]]
+
+                qs_1 = {}
+                for k in self.q:
+                    if k[0] == new_state[0] and k[1] == new_state[1]:
+                        qs_1[k] = self.q[k]
+                max_q_1 = max(qs, key=qs.get)
+                action_1 = max_q_1[2]
+
+                self.q[(current_state[0], current_state[1], action)] += step_size * (reward+self.gamma*self.q[(new_state[0], new_state[1], action_1)] - self.q[(current_state[0], current_state[1], action)])
+                current_state = new_state
+                action = action_1
+            else:
+                reward = self.rewards[current_state[0]][current_state[1]]
+                self.q[(current_state[0], current_state[1], action)] += step_size * (reward+self.gamma*self.q[(current_state[0], current_state[1], action)] - self.q[(current_state[0], current_state[1], action)])
+
+
+    def print_q(self):
+        pass
+
+
+
+
     def print_values(self):
         # z = self.values
         # z = z.tolist()
@@ -144,5 +181,12 @@ class Grid:
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.temporal_difference_learning(step_size)
+            if verbose:
+                self.print_values()
+
+    def run_sarsa(self, amount_iterations, step_size, verbose=False):
+        for i in range(amount_iterations):
+            print("iteration {}".format(i))
+            self.sarsa(step_size)
             if verbose:
                 self.print_values()
