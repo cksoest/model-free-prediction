@@ -9,13 +9,31 @@ class Grid:
     def __init__(self, rewards, policy, terminal_states, gamma):
         self.rewards = rewards
         self.policy = policy
-        self.soft_policy = {(i, j, a): 0 for i, j, a in product(range(rewards.shape[0]), range(rewards.shape[1]), ["U", "R", "D", "L"])}
         self.terminal_states = terminal_states
+        self.soft_policy = self.generate_soft_policy()
         self.start_points = self.generate_start_points()
         self.gamma = gamma
         self.values = np.zeros(self.rewards.shape)
         self.returns = {(i, j): [] for i, j in product(range(rewards.shape[0]), range(rewards.shape[1]))}
         self.q = {(i, j, a): 0 for i, j, a in product(range(rewards.shape[0]), range(rewards.shape[1]), ["U", "R", "D", "L"])}
+
+    def generate_soft_policy(self):
+        soft_policy = {(i, j, a): 0 for i, j, a in product(range(self.rewards.shape[0]), range(self.rewards.shape[1]), ["U", "R", "D", "L"])}
+        for i, j in product(range(self.rewards.shape[0]), range(self.rewards.shape[1])):
+
+            if (i, j) in self.terminal_states:
+                continue
+            change = 1
+            changes = []
+            for _ in range(3):
+                dir_change = random.uniform(0, change)
+                changes.append(dir_change)
+                change -= dir_change
+            changes.append(change)
+
+            for a, c in zip(["U", "R", "D", "L"], changes):
+                soft_policy[(i, j, a)] = c
+        return soft_policy
 
     def generate_start_points(self):
         start_points = []
@@ -129,7 +147,7 @@ class Grid:
                 reward = self.rewards[current_state[0]][current_state[1]]
                 self.values[current_state[0]][current_state[1]] += step_size * (reward + self.gamma * self.values[current_state[0]][current_state[1]] - self.values[current_state[0]][current_state[1]])
 
-    def sarsa(self, step_size, max_q=False):
+    def sarsa(self, step_size):
         current_state = random.choice(self.start_points)
         qs = {}
         for k in self.q:
@@ -186,9 +204,35 @@ class Grid:
                 reward = self.rewards[current_state[0]][current_state[1]]
                 self.q[(current_state[0], current_state[1], action)] += step_size * (reward + self.gamma * max_q - self.q[(current_state[0], current_state[1], action)])
 
+    def on_policy_first_visit_monte_carlo_control(self, epsilon):
+        episode = self.generate_episode(soft=True)
+        episode_copy = copy.deepcopy(episode)
+        g = 0
+        for step in reversed(episode[:-1]):
+            current_state = step[0]
+            episode_copy.remove(step)
+            g = self.gamma * g + step[2]
+            if step[0] not in [step_2[0] for step_2 in episode_copy]:
+                self.returns[(current_state[0], current_state[1])].append(g)
+                self.q[(current_state[0], current_state[1], step[1])] = np.mean(self.returns[(current_state[0], current_state[1])])
 
-    # def on_policy_first_visit_monte_carlo_control(self, epsilon):
+                qs = {}
+                for k in self.q:
+                    if k[0] == current_state[0] and k[1] == current_state[1]:
+                        qs[k] = self.q[k]
+                max_q = max(qs, key=qs.get)
+                max_action = max_q[2]
 
+                states = {}
+                for prob in self.soft_policy:
+                    if (prob[0], prob[1]) == current_state:
+                        states[prob] = self.soft_policy[prob]
+
+                for state in states:
+                    if state[2] == max_action:
+                        self.soft_policy[current_state[0], current_state[1], state[2]] = 1 - epsilon + epsilon/len(["U", "R", "D", "L"])
+                    else:
+                        self.soft_policy[current_state[0], current_state[1], state[2]] = epsilon/len(["U", "R", "D", "L"])
 
     def print_values(self):
         # z = self.values
