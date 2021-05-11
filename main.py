@@ -8,12 +8,7 @@ rewards = np.array([
             [-1, -1, -1, -1],
             [10, -2, -1, -1]
         ])
-policy = [
-    ["D", "L", "R", "X"],
-    ["D", "R", "D", "U"],
-    ["R", "U", "D", "U"],
-    ["X", "L", "R", "U"]
-]
+policy = None
 terminal_states = [(0, 3), (3, 0)]
 gamma = 1
 

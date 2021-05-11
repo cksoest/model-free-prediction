@@ -165,7 +165,7 @@ class Grid:
         """Deze functie voor een iteratie uit voor
         Het Temporal difference learning algoritme.
 
-        :param step_size: De stapgroote.
+        :param step_size: De stapgrootte.
         :rtype float
         """
         current_state = random.choice(self.start_points)
@@ -213,7 +213,7 @@ class Grid:
         het Sarsa algoritme.
 
 
-        :param step_size: De stapgroote
+        :param step_size: De stapgrootte
         :rtype: float
         """
         current_state = random.choice(self.start_points)
@@ -241,7 +241,7 @@ class Grid:
         """Deze functie voor een iteratie uit voor
         het Q-learning algoritme.
 
-        :param step_size: De stapgroote
+        :param step_size: De stapgrootte
         :rtype: float
         """
         current_state = random.choice(self.start_points)
@@ -339,7 +339,7 @@ class Grid:
 
         :param amount_iterations: Aantal iteratie dat gedaan moet worden.
         :rtype: int
-        :param step_size: De stapgroote
+        :param step_size: De stapgrootte
         :rtype float
         :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
         :rtype: bool
@@ -373,7 +373,7 @@ class Grid:
 
         :param amount_iterations: Aantal iteratie dat gedaan moet worden.
         :rtype: int
-        :param step_size: De stapgroote
+        :param step_size: De stapgrootte
         :rtype float
         :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
         :rtype: bool
@@ -390,7 +390,7 @@ class Grid:
 
         :param amount_iterations: Aantal iteratie dat gedaan moet worden.
         :rtype: int
-        :param step_size: De stapgroote
+        :param step_size: De stapgrootte
         :rtype float
         :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
         :rtype: bool
