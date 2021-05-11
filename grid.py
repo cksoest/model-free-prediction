@@ -19,6 +19,11 @@ class Grid:
         self.q = {(i, j, a): 0 for i, j, a in product(range(rewards.shape[0]), range(rewards.shape[1]), self.actions)}
 
     def generate_soft_policy(self):
+        """Deze functie genereert een random soft-policy.
+
+        :return: Een soft-policy
+        :rtype dict
+        """
         soft_policy = {(i, j, a): 0 for i, j, a in product(range(self.rewards.shape[0]), range(self.rewards.shape[1]), self.actions)}
         for i, j in product(range(self.rewards.shape[0]), range(self.rewards.shape[1])):
             if (i, j) in self.terminal_states:
@@ -35,6 +40,12 @@ class Grid:
         return soft_policy
 
     def generate_start_points(self):
+        """Deze functie berekend de alle mogelijke startpunten
+        aan de hand van de shape van het grid en de terminal-states.
+
+        :return: Alle mogelijke startpunten.
+        :rtype: list
+        """
         start_points = []
         for i, j in product(range(self.rewards.shape[0]), range(self.rewards.shape[1])):
             if (i, j) in self.terminal_states:
@@ -45,6 +56,16 @@ class Grid:
 
     @staticmethod
     def new_state_based_on_action(current_state, action):
+        """Deze functie berekend wat de volgende state is
+        aan de hand van de huidige state en de actie
+        die uitgevoerd word.
+
+        :param current_state: Huidige cell.
+        :type tuple
+        :param action: De actie die uitgevoerd word.
+        :return: De nieuwe cell.
+        :rtype: tuple
+        """
         u = (current_state[0] - 1, current_state[1])
         r = (current_state[0], current_state[1] + 1)
         d = (current_state[0] + 1, current_state[1])
@@ -96,6 +117,12 @@ class Grid:
         return new_state
 
     def generate_episode(self, soft=False):
+        """ Deze functie genereert een episode op basis van
+        een policy of een soft-policy.
+
+        :return: Een episode.
+        :rtype: list
+        """
         episode = []
         current_state = random.choice(self.start_points)
         episode.append(current_state)
@@ -121,6 +148,9 @@ class Grid:
         return episode
 
     def monte_carlo_policy_evaluation(self):
+        """Deze functie voor een iteratie uit voor
+        het Monte Carlo policy evaluation algoritme.
+        """
         episode = self.generate_episode()
         episode_copy = copy.deepcopy(episode)
         g = 0
@@ -132,6 +162,12 @@ class Grid:
                 self.values[step[0][0]][step[0][1]] = np.mean(self.returns[step[0]])
 
     def temporal_difference_learning(self, step_size):
+        """Deze functie voor een iteratie uit voor
+        Het Temporal difference learning algoritme.
+
+        :param step_size: De stapgroote.
+        :rtype float
+        """
         current_state = random.choice(self.start_points)
         while current_state not in self.terminal_states:
             action = self.policy[current_state[0]][current_state[1]]
@@ -146,6 +182,12 @@ class Grid:
                 self.values[current_state[0]][current_state[1]] += step_size * (reward + self.gamma * self.values[current_state[0]][current_state[1]] - self.values[current_state[0]][current_state[1]])
 
     def on_policy_first_visit_monte_carlo_control(self, epsilon):
+        """Deze functie voor een iteratie uit voor het
+        On policy first visit Monte Carlo control algoritme
+
+        :param epsilon: Epsilon waarde.
+        :rtype: float
+        """
         episode = self.generate_episode(soft=True)
         episode_copy = copy.deepcopy(episode)
         g = 0
@@ -167,6 +209,13 @@ class Grid:
                         self.soft_policy[current_state[0], current_state[1], state[2]] = epsilon/len(self.actions)
 
     def sarsa(self, step_size):
+        """Deze functie voor een iteratie uit voor
+        het Sarsa algoritme.
+
+
+        :param step_size: De stapgroote
+        :rtype: float
+        """
         current_state = random.choice(self.start_points)
         qs_of_current_state = {k: self.q[k] for k in self.q if (k[0], k[1]) == current_state}
         max_q_key = max(qs_of_current_state, key=qs_of_current_state.get)
@@ -189,6 +238,12 @@ class Grid:
                 self.q[(current_state[0], current_state[1], action)] += step_size * (reward+self.gamma*self.q[(current_state[0], current_state[1], action)] - self.q[(current_state[0], current_state[1], action)])
 
     def q_learning(self, step_size):
+        """Deze functie voor een iteratie uit voor
+        het Q-learning algoritme.
+
+        :param step_size: De stapgroote
+        :rtype: float
+        """
         current_state = random.choice(self.start_points)
         while current_state not in self.terminal_states:
             qs_of_current_state = {k: self.q[k] for k in self.q if (k[0], k[1]) == current_state}
@@ -209,13 +264,52 @@ class Grid:
                 reward = self.rewards[current_state[0]][current_state[1]]
                 self.q[(current_state[0], current_state[1], action)] += step_size * (reward + self.gamma * max_q - self.q[(current_state[0], current_state[1], action)])
 
+    def print_q_soft_policy(self, to_print):
+        """ De functie print de q-waardes/soft-policy
+        op een iet mooiere manier op het scherm.
+
+        :param to_print: self.q of self.soft_policy
+        :rtype: dict
+        """
+        print("Q/Soft-policy: ")
+        for i in range(self.rewards.shape[0]):
+            row = ["" for _ in range(3)]
+            qs = []
+            for key in to_print:
+                if key[2] == "U" and key[0]== i:
+                    q = str(round(to_print[key], 3))
+                    len_q = abs(len(str(q)))
+                    row[0] += "|" + " " * len_q
+                    row[0] += q
+                    row[0] += " " * len_q + "|"
+                    qs.append(len_q)
+
+                if key[2] == "L" and key[0] == i:
+                    q = str(round(to_print[key], 3))
+                    len_q = abs(len(str(q)))
+                    row[1] += "|" + str(round(to_print[key], 3))
+                    row[1] += " " * len_q
+                    key = (key[0], key[1], "R")
+                    row[1] += str(round(to_print[key], 3)) + "|"
+                    qs.append(len_q)
+
+                if key[2] == "D" and key[0]== i:
+                    q = str(round(to_print[key], 3))
+                    len_q = abs(len(str(q)))
+                    row[2] += "|" + " " * len_q
+                    row[2] += q
+                    row[2] += " " * len_q + "|"
+                    qs.append(len_q)
+
+            row[2] += "\n" + "-" * (max(qs) * 3 * 4 + 8)
+            for row in row:
+                print(row)
+
     def print_values(self):
-        # z = self.values
-        # z = z.tolist()
-        # z.reverse()
-        # # plt.pcolormesh(z, cmap="Reds")
-        # # plt.title("Values of grid")
-        # # plt.show()
+        """ Print de values op een mooiere
+        manier naar het scherm.
+        """
+        print("Values: ")
         for row in self.values:
             values = "|"
             for v in row:
@@ -225,6 +319,14 @@ class Grid:
         print("\n")
 
     def run_monte_carlo_policy_evaluation(self, amount_iterations, verbose=False):
+        """Deze functie voert het Monte Carlo policy evaluation
+        algoritme uit, de uitvoer waardes staat opgeslagen in self.values.
+
+        :param amount_iterations: Aantal iteratie dat gedaan moet worden.
+        :rtype: int
+        :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
+        :rtype: bool
+        """
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.monte_carlo_policy_evaluation()
@@ -232,6 +334,16 @@ class Grid:
                 self.print_values()
 
     def run_temporal_difference_learning(self, amount_iterations, step_size, verbose=False):
+        """Deze functie voert het Monte Temporal difference learning
+        algoritme uit, de uitvoer waardes staat opgeslagen in self.values.
+
+        :param amount_iterations: Aantal iteratie dat gedaan moet worden.
+        :rtype: int
+        :param step_size: De stapgroote
+        :rtype float
+        :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
+        :rtype: bool
+        """
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.temporal_difference_learning(step_size)
@@ -239,25 +351,52 @@ class Grid:
                 self.print_values()
 
     def run_on_policy_first_visit_monte_carlo_control(self, amount_iterations, epsilon, verbose=False):
+        """Deze functie voert het On policy first visit Monte Carlo control
+        algoritme uit, de uitvoer waardes staat opgeslagen in self.soft_policy.
+
+        :param amount_iterations: Aantal iteratie dat gedaan moet worden.
+        :rtype: int
+        :param epsilon: Epsilon waarde.
+        :rtype float
+        :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
+        :rtype: bool
+        """
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.on_policy_first_visit_monte_carlo_control(epsilon)
             if verbose:
-                self.print_values()
+                self.print_q_soft_policy(self.soft_policy)
 
     def run_sarsa(self, amount_iterations, step_size, verbose=False):
+        """Deze functie voert het Sarsa
+        algoritme uit, de uitvoer waardes staat opgeslagen in self.q.
+
+        :param amount_iterations: Aantal iteratie dat gedaan moet worden.
+        :rtype: int
+        :param step_size: De stapgroote
+        :rtype float
+        :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
+        :rtype: bool
+        """
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.sarsa(step_size)
             if verbose:
-                self.print_values()
+                self.print_q_soft_policy(self.q)
 
     def run_q_learning(self, amount_iterations, step_size, verbose=False):
+        """Deze functie voert het Q-learning
+        algoritme uit, de uitvoer waardes staat opgeslagen in self.q.
+
+        :param amount_iterations: Aantal iteratie dat gedaan moet worden.
+        :rtype: int
+        :param step_size: De stapgroote
+        :rtype float
+        :param verbose: True als de uitvoer naar het scherm geprint word, anders False.
+        :rtype: bool
+        """
         for i in range(amount_iterations):
             print("iteration {}".format(i))
             self.q_learning(step_size)
             if verbose:
-                self.print_values()
-
-a = "   " + str(1.00) + "   |" + "\n" + str(1.00) + "   " + str(1.00) + "|\n" + "   " + str(1.00) + "   |" + "\n---------"
-print(a)
+                self.print_q_soft_policy(self.q)

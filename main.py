@@ -18,16 +18,4 @@ terminal_states = [(0, 3), (3, 0)]
 gamma = 1
 
 grid = Grid(rewards, policy, terminal_states, gamma)
-# grid.generate_episode()
-# grid.monte_carlo_policy_evaluation()
-# grid.temporal_difference_learning(0.01)
-# grid.run_td(500, 0.01, verbose=True)
-# grid.run_sarsa(500, 0.01)
-# grid.run_sarsa(1000, 0.01)
-# grid.run_mc(500)
-# print(grid.q)
-# grid.generate_soft_policy()
-# print(grid.soft_policy)
-for _ in range(500):
-    grid.on_policy_first_visit_monte_carlo_control(0.01)
-print(grid.soft_policy)
+grid.run_q_learning(500, 0.05, verbose=True)
